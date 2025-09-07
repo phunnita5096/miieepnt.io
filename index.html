@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GLB PBR Model Viewer</title>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.min.js"></script>
+
+  <script>
+    let scene, camera, renderer, controls, model, light;
+
+    const params = {
+      lightX: 10,
+      lightY: 10,
+      lightZ: 10
+    };
+
+    init();
+    animate();
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x222222);
+
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 2, 5);
+
+      renderer = new THREE.WebGLRenderer({antialias: true});
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+      // Light
+      light = new THREE.PointLight(0xffffff, 1);
+      light.position.set(params.lightX, params.lightY, params.lightZ);
+      scene.add(light);
+      scene.add(new THREE.AmbientLight(0x404040));
+
+      // Ground
+      const groundMat = new THREE.MeshStandardMaterial({color: 0x888888, roughness: 1});
+      const ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), groundMat);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -1;
+      scene.add(ground);
+
+      // Load GLB model
+      const loader = new THREE.GLTFLoader();
+      loader.load('sexy_punk_amy_rose.glb', function(gltf) {
+        model = gltf.scene;
+        model.scale.set(1, 1, 1);
+        scene.add(model);
+      });
+
+      // GUI
+      const gui = new dat.GUI();
+      gui.add(params, 'lightX', -20, 20).onChange(updateLight);
+      gui.add(params, 'lightY', -20, 20).onChange(updateLight);
+      gui.add(params, 'lightZ', -20, 20).onChange(updateLight);
+
+      window.addEventListener('resize', onWindowResize, false);
+    }
+
+    function updateLight() {
+      light.position.set(params.lightX, params.lightY, params.lightZ);
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+  </script>
+</body>
+</html>
